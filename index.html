@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Termo Clone - Deluxe</title>
     <style>
-        /* Variáveis de Tema */
         :root {
             --color-correct: #3aa394;
             --color-place: #d3ad69;
@@ -15,252 +14,124 @@
             --tile-border: #4c4347;
             --kbd-bg: #4c4347;
         }
-
         [data-theme="light"] {
             --bg-body: #f4f1de;
             --text-main: #312a2c;
             --tile-border: #d3d3d3;
             --kbd-bg: #ccc;
         }
-
         body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'Mitr', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            transition: background 0.3s ease;
-            overflow: hidden;
+            background-color: var(--bg-body); color: var(--text-main);
+            font-family: 'Mitr', sans-serif; display: flex; flex-direction: column;
+            align-items: center; height: 100vh; margin: 0; transition: background 0.3s ease; overflow: hidden;
         }
-
-        header {
-            width: 100%;
-            padding: 10px 0;
-            border-bottom: 2px solid var(--tile-border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-        }
-
+        header { width: 100%; padding: 10px 0; border-bottom: 2px solid var(--tile-border); display: flex; justify-content: space-around; align-items: center; font-size: 1.8rem; font-weight: 700; }
         .theme-toggle { cursor: pointer; font-size: 1.5rem; }
-
         #game-board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 8px; padding: 20px; }
         .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-
         .tile {
-            width: 55px; height: 55px;
-            border: 3px solid var(--tile-border);
+            width: 55px; height: 55px; border: 3px solid var(--tile-border);
             display: flex; align-items: center; justify-content: center;
             font-size: 2rem; font-weight: 700; text-transform: uppercase;
             border-radius: 4px; transition: transform 0.1s ease;
         }
-
         .tile.filled { border-color: #888; transform: scale(1.05); }
         .tile.correct { background-color: var(--color-correct); border-color: var(--color-correct); color: white; }
         .tile.present { background-color: var(--color-place); border-color: var(--color-place); color: white; }
-        .tile.absent { background-color: var(--color-wrong); border-color: var(--color-wrong); color: white; }
-
-        /* Animação de Pulo */
-        @keyframes jump {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
+        .tile.absent { background-color: var(--color-wrong); border-color: var(--color-wrong); color: white; opacity: 0.6; }
+        @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         .jump { animation: jump 0.5s ease; }
-
-        /* Animação de Chacoalhar */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
         .shake { animation: shake 0.4s; }
-
-        /* Teclado */
         #keyboard { width: 100%; max-width: 500px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .kbd-row { display: flex; justify-content: center; gap: 4px; }
-        button {
-            background-color: var(--kbd-bg); color: var(--text-main);
-            border: none; border-radius: 4px; padding: 15px 0;
-            font-weight: bold; cursor: pointer; flex: 1; transition: opacity 0.2s;
-        }
+        button { background-color: var(--kbd-bg); color: var(--text-main); border: none; border-radius: 4px; padding: 15px 0; font-weight: bold; cursor: pointer; flex: 1; transition: opacity 0.2s; }
         button.wide { flex: 1.5; }
         button.key-correct { background-color: var(--color-correct); color: white; }
         button.key-present { background-color: var(--color-place); color: white; }
-        button.key-absent { background-color: var(--color-wrong); color: white; opacity: 0.5; }
-
-        /* Modal */
-        #modal {
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.7); z-index:100; justify-content:center; align-items:center;
-        }
-        .modal-content { background: #2c2326; color: white; padding: 30px; border-radius: 12px; text-align: center; }
+        button.key-absent { background-color: var(--color-wrong); color: white; opacity: 0.4; }
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
+        .modal-content { background: #2c2326; color: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 300px; }
     </style>
 </head>
 <body>
-
-<header>
-    <div style="width: 40px;"></div> <div>TERMO</div>
-    <div class="theme-toggle" id="theme-btn">🌗</div>
-</header>
-
+<header><div style="width: 40px;"></div><div>TERMO</div><div class="theme-toggle" id="theme-btn">🌗</div></header>
 <div id="game-board"></div>
-
-<div id="keyboard">
-    <div class="kbd-row" id="row1"></div>
-    <div class="kbd-row" id="row2"></div>
-    <div class="kbd-row" id="row3"></div>
-</div>
-
-<div id="modal">
-    <div class="modal-content">
-        <h2>Estatísticas</h2>
-        <p id="stats-text"></p>
-        <button onclick="location.reload()" style="background: var(--color-correct); padding: 10px 20px; width: 100%; border-radius: 5px; color: white;">JOGAR DE NOVO</button>
-    </div>
-</div>
-
+<div id="keyboard"><div class="kbd-row" id="row1"></div><div class="kbd-row" id="row2"></div><div class="kbd-row" id="row3"></div></div>
+<div id="modal"><div class="modal-content"><h2>Resultado</h2><p id="stats-text"></p><button onclick="location.reload()" style="background: var(--color-correct); padding: 10px 20px; width: 100%; border-radius: 5px; color: white; border: none; cursor: pointer;">JOGAR DE NOVO</button></div></div>
 <script>
-    const WORDS = ["NOBRE", "SAGAZ", "AMIGO", "IDEIA", "PODER", "MUITO", "VIGOR", "HONRA", "JUSTO", "ETICO", "FORTE", "MUNDO", "TEMPO", "CORPO", "PEDRA", "ORDEM", "PLANO", "LIVRO", "FELIZ", "VALOR", "SAUDE", "AREIA", "PORTA", "GENTE"];
-    const SECRET = WORDS[Math.floor(Math.random() * WORDS.length)];
-    
-    let currentAttempt = 0;
-    let currentInput = "";
-    let gameOver = false;
-
-    // --- TEMA ---
+    const WORDS = ["SAGAZ", "NOBRE", "ALGOZ", "IDEIA", "PODER", "MUITO", "VIGOR", "HONRA", "JUSTO", "ETICO", "SOBRE", "FORTE", "ASSIM", "MUNDO", "TEMPO", "CORPO", "PEDRA", "ORDEM", "PLANO", "TOTAL", "LIVRO", "FORMA", "FELIZ", "LUGAR", "VALOR", "PONTO", "SAUDE", "MENTE", "POVOS", "AREIA", "PORTA", "GENTE", "VIVER", "CASAL", "SABER", "GRAÇA", "TERMO", "RAZÃO", "QUASE", "POBRE", "ALBUM", "FESTA", "FRASE", "ATIVO", "LOCAL", "Jovem", "Canto", "Busca", "Fonte", "Aviso", "Suave", "Vento", "Noite", "Prato", "Roupa", "União", "Campo", "Sorte", "Ainda", "Dizer", "Rosto", "Vozes", "Peito", "Ouvir", "Olhar", "Perto", "Falar", "Longe", "Bicho", "Peixe", "Certo", "Digno", "Fundo", "Tanto", "Sinal", "Mudar", "Parar", "Saber", "Vazio", "Tenro", "Vasta", "Plena", "Massa", "Gosto", "Chuva", "Beijo", "Folha", "Trato", "Lidar", "Moral", "Pausa", "Texto", "Honra", "Causa", "Brado", "Dever", "Sonho", "Senda", "Crivo", "Comum", "Temer", "Reais", "Poder", "Torpe", "Certo", "Coser", "Vênia", "Prole", "Digno", "Pária", "Dizer", "Ápice", "Gleba", "Ânimo", "Ancia", "Cedro", "Dócil", "Forte", "Saber", "Eficaz", "Atroz", "Haver", "Mudar", "Algoz", "Viver", "Achar", "Vício", "Ontem", "Pleno", "Noite", "Cada", "Sempre", "Sério", "Saída", "Fácil", "Lugar", "Ponto", "Útil", "Órfão", "Tédio", "Rápido", "Ágil", "Vago", "Ímpar", "Época", "Zelar", "Pecar", "Audaz", "Deter", "Levar", "Fazer", "Banal", "Lindo", "Breve", "Viver", "Sutil", "Ativo", "Astro", "Civil", "Feroz", "Falar", "Baixo", "Festa", "Tonto", "Ritmo", "Falar", "Nesse", "Deste", "Aquilo", "Manso", "Casta", "Largo", "Grave", "Livre", "Falso", "Sábio", "Dócil", "Bravo", "Lento", "Ficar", "Vimos", "Vênia", "Pesar", "Ouro", "Prata", "Metal", "Ferro", "Gás", "Bruto", "Vasto", "Plano", "Trama", "Trevo", "Praga", "Vulto", "Até", "Logo", "Cedo", "Duro", "Mole", "Fino", "Raro", "Vago", "Fixar", "Tecer", "Gerir", "Sumir", "Banir", "Votar", "Andar", "Voar", "Correr", "Pular", "Subir", "Abrir", "Lutar", "Gelar", "Arder", "Odiar", "Amar", "Zelar"];
+    const SECRET = WORDS[Math.floor(Math.random() * WORDS.length)].toUpperCase();
+    let currentAttempt = 0; let currentInput = ""; let gameOver = false;
     const themeBtn = document.getElementById('theme-btn');
     let currentTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', currentTheme);
-
     themeBtn.onclick = () => {
         currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', currentTheme);
         localStorage.setItem('theme', currentTheme);
     };
-
-    // --- BOARD ---
     const board = document.getElementById('game-board');
     for (let i = 0; i < 6; i++) {
-        const row = document.createElement('div');
-        row.className = 'row'; row.id = `r-${i}`;
+        const row = document.createElement('div'); row.className = 'row'; row.id = `r-${i}`;
         for (let j = 0; j < 5; j++) {
-            const tile = document.createElement('div');
-            tile.className = 'tile'; tile.id = `t-${i}-${j}`;
+            const tile = document.createElement('div'); tile.className = 'tile'; tile.id = `t-${i}-${j}`;
             row.appendChild(tile);
         }
         board.appendChild(row);
     }
-
-    // --- TECLADO ---
     const keys = [ "QWERTYUIOP".split(""), "ASDFGHJKL".split(""), ["ENTER", ..."ZXCVBNM".split(""), "BACK"] ];
     keys.forEach((row, i) => {
         const rowEl = document.getElementById(`row${i+1}`);
         row.forEach(k => {
-            const b = document.createElement('button');
-            b.textContent = k === "BACK" ? "←" : k;
-            b.id = `k-${k}`;
+            const b = document.createElement('button'); b.textContent = k === "BACK" ? "←" : k; b.id = `k-${k}`;
             if (k === "ENTER" || k === "BACK") b.classList.add('wide');
-            b.onclick = () => handleInput(k);
-            rowEl.appendChild(b);
+            b.onclick = () => handleInput(k); rowEl.appendChild(b);
         });
     });
-
     function handleInput(k) {
         if (gameOver) return;
         if (k === "ENTER") submit();
-        else if (k === "BACK" || k === "BACKSPACE") {
-            currentInput = currentInput.slice(0, -1);
-            update();
-        } else if (currentInput.length < 5 && /^[A-Z]$/i.test(k)) {
-            currentInput += k.toUpperCase();
-            update();
-        }
+        else if (k === "BACK" || k === "BACKSPACE") { currentInput = currentInput.slice(0, -1); update(); }
+        else if (currentInput.length < 5 && /^[A-Z]$/i.test(k)) { currentInput += k.toUpperCase(); update(); }
     }
-
     function update() {
         for (let i = 0; i < 5; i++) {
             const t = document.getElementById(`t-${currentAttempt}-${i}`);
-            t.textContent = currentInput[i] || "";
-            t.classList.toggle('filled', !!currentInput[i]);
+            t.textContent = currentInput[i] || ""; t.classList.toggle('filled', !!currentInput[i]);
         }
     }
-
     function submit() {
         if (currentInput.length < 5) {
             document.getElementById(`r-${currentAttempt}`).classList.add('shake');
             setTimeout(() => document.getElementById(`r-${currentAttempt}`).classList.remove('shake'), 400);
             return;
         }
-
-        const guess = currentInput;
-        const secretArr = SECRET.split("");
-        const results = new Array(5).fill("absent");
-
-        for (let i = 0; i < 5; i++) {
-            if (guess[i] === secretArr[i]) {
-                results[i] = "correct";
-                secretArr[i] = null;
-            }
-        }
-        for (let i = 0; i < 5; i++) {
-            if (results[i] === "correct") continue;
-            let idx = secretArr.indexOf(guess[i]);
-            if (idx !== -1) {
-                results[i] = "present";
-                secretArr[idx] = null;
-            }
-        }
-
+        const guess = currentInput; const secretArr = SECRET.split(""); const results = new Array(5).fill("absent");
+        for (let i = 0; i < 5; i++) { if (guess[i] === secretArr[i]) { results[i] = "correct"; secretArr[i] = null; } }
+        for (let i = 0; i < 5; i++) { if (results[i] === "correct") continue; let idx = secretArr.indexOf(guess[i]); if (idx !== -1) { results[i] = "present"; secretArr[idx] = null; } }
         results.forEach((status, i) => {
             const t = document.getElementById(`t-${currentAttempt}-${i}`);
-            setTimeout(() => {
-                t.classList.add(status);
-                updateKey(guess[i], status);
-                if (i === 4 && guess === SECRET) victoryAnimation();
-            }, i * 150);
+            setTimeout(() => { t.classList.add(status); updateKey(guess[i], status); if (i === 4 && guess === SECRET) victoryAnimation(); }, i * 150);
         });
-
-        if (guess === SECRET) {
-            gameOver = true;
-        } else if (currentAttempt === 5) {
-            gameOver = true;
-            setTimeout(() => showStats(false), 1500);
-        } else {
-            currentAttempt++;
-            currentInput = "";
-        }
+        if (guess === SECRET) { gameOver = true; }
+        else if (currentAttempt === 5) { gameOver = true; setTimeout(() => showStats(false), 1500); }
+        else { currentAttempt++; currentInput = ""; }
     }
-
     function updateKey(letter, status) {
-        const k = document.getElementById(`k-${letter}`);
-        if (!k || k.classList.contains('key-correct')) return;
-        k.className = k.className.replace(/key-\w+/, "");
-        k.classList.add(`key-${status}`);
+        const k = document.getElementById(`k-${letter}`); if (!k || k.classList.contains('key-correct')) return;
+        k.className = k.className.replace(/key-\w+/, ""); k.classList.add(`key-${status}`);
     }
-
     function victoryAnimation() {
-        for (let i = 0; i < 5; i++) {
-            setTimeout(() => {
-                document.getElementById(`t-${currentAttempt}-${i}`).classList.add('jump');
-            }, i * 100);
-        }
+        for (let i = 0; i < 5; i++) { setTimeout(() => { document.getElementById(`t-${currentAttempt}-${i}`).classList.add('jump'); }, i * 100); }
         setTimeout(() => showStats(true), 1500);
     }
-
     function showStats(win) {
-        const modal = document.getElementById('modal');
-        const text = document.getElementById('stats-text');
-        text.innerHTML = win ? "🎉 VOCÊ VENCEU!<br>Mandou muito bem." : `Fim de jogo!<br>A palavra era: <b>${SECRET}</b>`;
+        const modal = document.getElementById('modal'); const text = document.getElementById('stats-text');
+        text.innerHTML = win ? "🎉 VOCÊ VENCEU!" : `Fim de jogo!<br>A palavra era: <b>${SECRET}</b>`;
         modal.style.display = "flex";
     }
-
     window.onkeydown = (e) => handleInput(e.key.toUpperCase());
 </script>
-
 </body>
 </html>
