@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termo Clone - Edição Livre</title>
+    <style>
+        :root {
+            --color-correct: #3aa394;
+            --color-place: #d3ad69;
+            --color-wrong: #312a2c;
+            --bg-body: #6e5c62;
+            --text-main: white;
+            --tile-border: #4c4347;
+            --kbd-bg: #4c4347;
+            --focus-border: #ffffff;
+        }
+        [data-theme="light"] {
+            --bg-body: #f4f1de;
+            --text-main: #312a2c;
+            --tile-border: #d3d3d3;
+            --kbd-bg: #ccc;
+            --focus-border: #6e5c62;
+        }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Mitr', sans-serif; display: flex; flex-direction: column; align-items: center; height: 100vh; margin: 0; transition: background 0.3s ease; overflow: hidden; }
+        header { width: 100%; padding: 10px 0; border-bottom: 2px solid var(--tile-border); display: flex; justify-content: space-around; align-items: center; font-size: 1.8rem; font-weight: 700; }
+        .theme-toggle { cursor: pointer; font-size: 1.5rem; }
+        #game-board { display: grid; grid-template-rows: repeat(6, 1fr); gap: 8px; padding: 20px; }
+        .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .tile {
+            width: 55px; height: 55px; border: 3px solid var(--tile-border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 700; text-transform: uppercase;
+            border-radius: 4px; transition: all 0.1s ease; cursor: default;
+        }
+        /* Estilo da caixa focada/selecionada */
+        .tile.active-row { cursor: pointer; }
+        .tile.focused { border-color: var(--focus-border); transform: scale(1.1); box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        
+        .tile.filled { border-color: #888; }
+        .tile.correct { background-color: var(--color-correct); border-color: var(--color-correct); color: white; }
+        .tile.present { background-color: var(--color-place); border-color: var(--color-place); color: white; }
+        .tile.absent { background-color: var(--color-wrong); border-color: var(--color-wrong); color: white; opacity: 0.6; }
+        
+        @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .jump { animation: jump 0.5s ease; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+        .shake { animation: shake 0.4s; }
+
+        #keyboard { width: 100%; max-width: 500px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .kbd-row { display: flex; justify-content: center; gap: 4px; }
+        button { background-color: var(--kbd-bg); color: var(--text-main); border: none; border-radius: 4px; padding: 15px 0; font-weight: bold; cursor: pointer; flex: 1; }
+        button.wide { flex: 1.5; }
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
+        .modal-content { background: #2c2326; color: white; padding: 30px; border-radius: 12px; text-align: center; }
+    </style>
+</head>
+<body>
+<header><div style="width: 40px;"></div><div>TERMO</div><div class="theme-toggle" id="theme-btn">🌗</div></header>
+<div id="game-board"></div>
+<div id="keyboard"><div class="kbd-row" id="row1"></div><div class="kbd-row" id="row2"></div><div class="kbd-row" id="row3"></div></div>
+<div id="modal"><div class="modal-content"><h2>Resultado</h2><p id="stats-text"></p><button onclick="location.reload()" style="background: var(--color-correct); padding: 10px 20px; width: 100%; border-radius: 5px; color: white; border: none; cursor: pointer;">JOGAR DE NOVO</button></div></div>
+
+<script>
+    const WORDS = ["SAGAZ", "NOBRE", "ALGOZ", "IDEIA", "PODER", "MUITO", "VIGOR", "HONRA", "JUSTO", "ETICO", "FORTE", "MUNDO", "TEMPO", "LIVRO", "SAUDE", "GENTE", "TERMO", "SONHO", "AREIA", "PORTA"];
+    const SECRET = WORDS[Math.floor(Math.random() * WORDS.length)].toUpperCase();
+    
+    let currentAttempt = 0;
+    let focusedIndex = 0; // Onde a letra vai cair
+    let guesses = ["", "", "", "", "", ""]; 
+    let gameOver = false;
+
+    // Iniciar Tabuleiro
+    const board = document.getElementById('game-board');
+    for (let i = 0; i < 6; i++) {
+        const row = document.createElement('div');
+        row.className = 'row'; row.id = `r-${i}`;
+        for (let j = 0; j < 5; j++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.id = `t-${i}-${j}`;
+            // Clique para focar
+            tile.onclick = () => {
+                if (i === currentAttempt && !gameOver) {
+                    focusedIndex = j;
+                    updateVisuals();
+                }
+            };
+            row.appendChild(tile);
+        }
+        board.appendChild(row);
+    }
+
+    // Teclado
+    const layout = [ "QWERTYUIOP".split(""), "ASDFGHJKL".split(""), ["ENTER", ..."ZXCVBNM".split(""), "BACK"] ];
+    layout.forEach((row, i) => {
+        const rowEl = document.getElementById(`row${i+1}`);
+        row.forEach(k => {
+            const b = document.createElement('button'); b.textContent = k === "BACK" ? "←" : k;
+            b.onclick = () => handleInput(k); rowEl.appendChild(b);
+        });
+    });
+
+    function handleInput(k) {
+        if (gameOver) return;
+        
+        let currentWord = guesses[currentAttempt].split("");
+        // Garantir que o array tenha 5 espaços
+        while(currentWord.length < 5) currentWord.push("");
+
+        if (k === "ENTER") {
+            if (guesses[currentAttempt].length < 5) {
+                document.getElementById(`r-${currentAttempt}`).classList.add('shake');
+                setTimeout(() => document.getElementById(`r-${currentAttempt}`).classList.remove('shake'), 400);
+            } else {
+                submit();
+            }
+        } else if (k === "BACK" || k === "BACKSPACE") {
+            // Se a caixa atual estiver vazia, volta uma e apaga
+            if (currentWord[focusedIndex] === "" && focusedIndex > 0) {
+                focusedIndex--;
+            }
+            currentWord[focusedIndex] = "";
+            guesses[currentAttempt] = currentWord.join("");
+            updateVisuals();
+        } else if (/^[A-Z]$/i.test(k)) {
+            currentWord[focusedIndex] = k.toUpperCase();
+            guesses[currentAttempt] = currentWord.join("");
+            // Pula para a próxima caixa após digitar
+            if (focusedIndex < 4) focusedIndex++;
+            updateVisuals();
+        }
+    }
+
+    function updateVisuals() {
+        const word = guesses[currentAttempt];
+        for (let j = 0; j < 5; j++) {
+            const t = document.getElementById(`t-${currentAttempt}-${j}`);
+            t.textContent = word[j] || "";
+            t.classList.remove('focused', 'filled');
+            if (j === focusedIndex && !gameOver) t.classList.add('focused');
+            if (word[j]) t.classList.add('filled');
+            t.classList.add('active-row');
+        }
+    }
+
+    function submit() {
+        const guess = guesses[currentAttempt];
+        const secretArr = SECRET.split("");
+        const results = new Array(5).fill("absent");
+
+        for (let i = 0; i < 5; i++) {
+            if (guess[i] === secretArr[i]) {
+                results[i] = "correct";
+                secretArr[i] = null;
+            }
+        }
+        for (let i = 0; i < 5; i++) {
+            if (results[i] === "correct") continue;
+            let idx = secretArr.indexOf(guess[i]);
+            if (idx !== -1) {
+                results[i] = "present";
+                secretArr[idx] = null;
+            }
+        }
+
+        results.forEach((status, i) => {
+            const t = document.getElementById(`t-${currentAttempt}-${i}`);
+            t.classList.remove('focused');
+            setTimeout(() => {
+                t.classList.add(status);
+                if (i === 4 && guess === SECRET) victory();
+            }, i * 150);
+        });
+
+        if (guess === SECRET) {
+            gameOver = true;
+        } else if (currentAttempt === 5) {
+            gameOver = true;
+            setTimeout(() => showStats(false), 1500);
+        } else {
+            currentAttempt++;
+            focusedIndex = 0;
+            updateVisuals();
+        }
+    }
+
+    function victory() {
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => document.getElementById(`t-${currentAttempt}-${i}`).classList.add('jump'), i * 100);
+        }
+        setTimeout(() => showStats(true), 1500);
+    }
+
+    function showStats(win) {
+        const modal = document.getElementById('modal');
+        document.getElementById('stats-text').innerHTML = win ? "🎉 BRILHANTE!" : `A palavra era: <b>${SECRET}</b>`;
+        modal.style.display = "flex";
+    }
+
+    // Inicializar visual
+    updateVisuals();
+    window.onkeydown = (e) => handleInput(e.key.toUpperCase());
+    
+    // Tema
+    const themeBtn = document.getElementById('theme-btn');
+    themeBtn.onclick = () => {
+        let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+    };
+</script>
+</body>
+</html>
